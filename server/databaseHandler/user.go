@@ -19,7 +19,7 @@ func returnResult(result *sql.Rows) interface{} {
 		result.Scan(&res)
 		return res
 	} else {
-		return -1
+		return int64(-1)
 	}
 }
 
@@ -65,7 +65,7 @@ func GetUserProfilePicture(username string) string {
 }
 
 func GetUserIdByUsername(username string) int {
-	return returnResult(selectOneFromUser("id", "username", username)).(int)
+	return int(returnResult(selectOneFromUser("id", "username", username)).(int64))
 }
 
 func GetUserFriendRequests(userId int) string {
@@ -74,6 +74,32 @@ func GetUserFriendRequests(userId int) string {
 
 func GetUserUsernameById(userId int) string {
 	return (returnResult(selectOneFromUser("username", "id", userId))).(string)
+}
+
+func UsernameExists(username string) bool {
+	result, err := db.Query("select count(1) from user where username = ?", username)
+	if err == nil {
+		if int(returnResult(result).(int64)) == 1 {
+			return true
+		} else {
+			return false
+		}
+	} else {
+		return false
+	}
+}
+
+func EmailExists(email string) bool {
+	result, err := db.Query("select count(1) from user where email = ?", email)
+	if err == nil {
+		if int(returnResult(result).(int64)) == 1 {
+			return true
+		} else {
+			return false
+		}
+	} else {
+		return false
+	}
 }
 
 func AddUserToFriendsList(userId int, newFriend string) {

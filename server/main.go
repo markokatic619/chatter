@@ -1,16 +1,16 @@
 package main
 
 import (
+	"bytes"
 	databasehandler "chatter/databaseHandler"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"strings"
-	"time"
-
 	"log"
 	"math/rand"
 	"net/http"
+	"strings"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -19,15 +19,25 @@ import (
 )
 
 type LoginCookies struct {
-	id          int
-	loginCookie string
+	id           int
+	loginCookie  string
+	clientAdress string
 }
 
-type User struct {
+type LoginForm struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
-
+type RegisterForm struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Email     string `json:"email"`
+	Birthday  string `json:"birthday"`
+	Password  string `json:"password"`
+}
+type LogoutForm struct {
+	loginCookie string `json:"loginCookie`
+}
 type Message struct {
 	RecieverUsername string `json:"username"`
 	Message          string `json:"message"`
@@ -57,19 +67,27 @@ func main() {
 
 		body, _ := ioutil.ReadAll(r.Body)
 		json.Unmarshal(body, &message)
-
 		//If user that is sending message is on friend list of a user that is receiving message, send messaage.
 		if findFriend(databasehandler.GetUserFriendsList(message.RecieverUsername), databasehandler.GetUserUsernameById(userId)) {
+			//send message to user if user is loged in
+			sendMessage(userId, message.Message, &loginCookies)
+			//save message to database
+
+			//add user that sent message to top of receivedMessages row
 
 		}
 
 	})
 	router.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		setLoginCookie(w, r, &loginCookies)
+		go login(w, r, &loginCookies)
+
+	})
+	router.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		go logout(r, &loginCookies)
 
 	})
 	router.HandleFunc("/register", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Print("register\n")
+		go register(w, r, &loginCookies)
 
 	})
 	router.HandleFunc("/addFriend", func(w http.ResponseWriter, r *http.Request) {
@@ -93,24 +111,85 @@ func getUserIdByCookie(cookie string, loginCookies []LoginCookies) int {
 	}
 	return -1
 }
-func setLoginCookie(w http.ResponseWriter, r *http.Request, loginCookies *[]LoginCookies) {
+
+func login(w http.ResponseWriter, r *http.Request, loginCookies *[]LoginCookies) {
 
 	if r.Method == http.MethodPost {
-		var user User
+		var user LoginForm
 
 		body, _ := ioutil.ReadAll(r.Body)
 		json.Unmarshal(body, &user)
-		fmt.Print("Username: " + user.Email + ", password: " + user.Password + "\n")
 		userId := databasehandler.GetUserId(user.Email, user.Password)
 		if userId != -1 {
 			var cookie LoginCookies
 			cookie.loginCookie = StringWithCharset(32)
 			cookie.id = userId
+			cookie.clientAdress = r.RemoteAddr
 			*loginCookies = append(*loginCookies, cookie)
 			w.Write([]byte("{\"loginCookie\":\"" + cookie.loginCookie + "\"}"))
+		} else {
+			w.Write([]byte("{\"loginCookie\":\"\"}"))
 		}
 	}
 }
+
+func register(w http.ResponseWriter, r *http.Request, loginCookies *[]LoginCookies) {
+	if r.Method == http.MethodPost {
+		var user RegisterForm
+
+		body, _ := ioutil.ReadAll(r.Body)
+		json.Unmarshal(body, &user)
+
+		//check is email being used
+
+		if databasehandler.EmailExists(user.Email) {
+			w.Write([]byte("{\"loginCookie\":\"\",\"responseMessage\":\"Error: email already in use\"}"))
+			return
+		}
+		//generate username
+		var username = ""
+		var i = 0
+		for ok := true; ok; ok = databasehandler.UsernameExists(username) {
+			username = user.FirstName + user.LastName + fmt.Sprint(i)
+			i++
+		}
+		//register new user
+		databasehandler.AddUser(username, user.Password, user.Email, user.FirstName, user.LastName, user.Birthday, "")
+		//set cookie for new user and return login cookie and response message of success or failure
+		userId := databasehandler.GetUserId(user.Email, user.Password)
+		if userId != -1 {
+			var cookie LoginCookies
+			cookie.loginCookie = StringWithCharset(32)
+			cookie.id = userId
+			cookie.clientAdress = r.RemoteAddr
+			*loginCookies = append(*loginCookies, cookie)
+			w.Write([]byte("{\"loginCookie\":\"" + cookie.loginCookie + "\",\"responseMessage\":\"success\"}"))
+		} else {
+			w.Write([]byte("{\"loginCookie\":\"\",\"responseMessage\":\"Error: failed to register\" }"))
+		}
+	}
+}
+
+func remove[T comparable](slice []T, s int) []T {
+	return append(slice[:s], slice[s+1:]...)
+}
+
+func logout(r *http.Request, loginCookies *[]LoginCookies) {
+	if r.Method == http.MethodPost {
+
+		var logout LogoutForm
+		body, _ := ioutil.ReadAll(r.Body)
+		json.Unmarshal(body, &logout)
+		for i := 0; i < len(*loginCookies); i++ {
+			if (*loginCookies)[i].loginCookie == logout.loginCookie {
+				remove((*loginCookies), i)
+				return
+			}
+		}
+
+	}
+}
+
 func StringWithCharset(length int) string {
 	var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 	const charset = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -129,4 +208,30 @@ func findFriend(friendsList string, name string) bool {
 		}
 	}
 	return false
+}
+func sendMessage(userId int, message string, cookies *[]LoginCookies) {
+	client := http.Client{}
+	buf := bytes.NewBufferString(message)
+	clientIpAdresses := getClientAddrsForUserId(userId, cookies)
+	for _, adress := range clientIpAdresses {
+		req, err := http.NewRequest("POST", adress, buf)
+		if err != nil {
+			// Handle error
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			// Handle error
+		}
+		defer resp.Body.Close()
+	}
+}
+
+func getClientAddrsForUserId(id int, cookies *[]LoginCookies) []string {
+	var clientAddrs []string
+	for _, cookie := range *cookies {
+		if cookie.id == id {
+			clientAddrs = append(clientAddrs, cookie.clientAdress)
+		}
+	}
+	return clientAddrs
 }
