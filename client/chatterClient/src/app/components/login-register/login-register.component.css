@@ -1,0 +1,90 @@
+.login-register-wrapper{
+    width: 400px;
+    max-width: 90%;
+    margin: auto;
+}
+
+.container {
+    background: rgba( 255, 255, 255, 0.1 );
+    box-shadow: 0 3px 20px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur( 1px );
+    border-radius: 15px;
+    border: 1px solid rgba( 255, 255, 255, 0.05 );
+    height: 500px;
+}
+.container .title {
+    display: block;
+    width: 300px;
+    max-width: 80%;
+    margin: 90px auto 60px auto;
+    font-size: 40px;
+    font-weight: 500;
+}
+#register-container .title{
+    margin-top: 80px;
+    margin-bottom: 10px;
+}
+.container input {
+    display: block;
+    background: transparent;
+    border: 1px solid rgba( 0, 0, 0, 0.1 );
+    text-indent: 10px;
+    border-radius: 15px;
+    width: 300px;
+    max-width: 80%;
+    height: 30px;
+    margin: 20px auto 0 auto;
+    padding-right: 10px;
+}
+.container input:focus {
+    outline: none;
+    border: 1px solid rgb(150,150,150);
+}
+.container input:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 30px transparent inset;
+    -webkit-background-clip: text;
+}
+
+.container button {
+    display: block;
+    border-radius: 15px;
+    width: 300px;
+    max-width: 80%;
+    height: 30px;
+    margin: 40px auto 0 auto;
+    border: 1px solid rgba( 0, 0, 0, 0.1 );
+    background-color: rgba( 0, 0, 0, 0.1 );
+}
+.container button:active {
+    background-color: rgba( 0, 0, 0, 0.15 );
+}
+.logoutPopup {
+    display: none;
+}
+
+.upper-button{
+    position: absolute;
+    background-color: transparent;
+    width: 80px;
+    height: 40px;
+    border: none;
+    border-radius: 10px;
+    border: 1px solid rgba( 100, 100, 100, 0.1);
+    z-index: 1;
+}
+#login-button {
+    margin-top: 20px;
+    margin-left: 20px;
+}
+#register-button {
+    margin-top: 20px;
+    margin-left: 105px;
+}
+
+.upper-button-clicked {
+    background-color: rgba( 0, 0, 0, 0.05 );
+}
+
+.displayNone {
+    display: none;
+}

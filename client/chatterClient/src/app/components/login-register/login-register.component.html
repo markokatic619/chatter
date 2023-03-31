@@ -1,0 +1,25 @@
+<div class="login-register-wrapper">
+
+    <button class="upper-button" [ngClass]="{'upper-button-clicked': selectedButton == 'login'}" id="login-button" (click)="getLoginForm()">Login</button>
+    <button class="upper-button" [ngClass]="{'upper-button-clicked': selectedButton == 'register'}" id="register-button" (click)="getRegisterForm()">Register</button>
+    <div class="container" [ngStyle]="{'display':(selectedButton=='login') ?'block' : 'none'}">
+        <div class="title">{{ aplicationName }}</div>
+        <form #loginForm="ngForm" (ngSubmit)="getUserData(loginForm.value)">
+            <input type="text" ngModel email="true" name="email" placeholder="Enter email" required>
+            <input type="password" ngModel name="password" placeholder="Enter the password" required>
+            <button>Login</button>
+        </form>
+    </div>
+    <div class="container" [ngStyle]="{'display':(selectedButton=='register') ?'block' : 'none'}" id="register-container">
+        <div class="title">{{ aplicationName }}</div>
+        <form #registerForm="ngForm" (ngSubmit)="getUserDataForRegistration(registerForm.value)">
+            <input type="text" ngModel name="name" placeholder="Enter your name" required>
+            <input type="email" ngModel email="true" name="email" placeholder="Enter email" required>
+            <input type="date" ngModel name="birthday">
+            <input type="password" ngModel name="password" placeholder="Enter the password" required>
+            <input type="password" ngModel name="text" placeholder="Repeat the password" required>
+            <button>Register</button>
+        </form>
+    </div>
+</div>
+

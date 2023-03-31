@@ -1,0 +1,45 @@
+.chatWrap{
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: none;
+    border-radius: 20px;
+}
+.userInfo{
+    height: 80px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+}
+.sendMessage{
+    position: absolute;
+    width: auto;
+    max-height: 20%;
+    bottom: 0;
+    margin: 10px;
+}
+.sendMessage input {
+    box-sizing: border-box;
+    min-height: 30px;
+    width: 75vw;
+    border-radius: 15px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+    border: 1px solid rgba( 150, 150, 150, 1 );
+    height: auto;
+    resize: none;
+}
+.sendMessage input:-webkit-autofill{
+    -webkit-box-shadow: 0 0 0 30px transparent inset;
+    -webkit-background-clip: text;
+}
+.sendMessage input:focus {
+    outline: none;
+    border: 1px solid rgba( 100, 100, 100, 1 );
+}
+.sendMessage button {
+    vertical-align: middle;
+    margin-left: 20px;
+    width: 30px;
+    height: 30px;
+}
